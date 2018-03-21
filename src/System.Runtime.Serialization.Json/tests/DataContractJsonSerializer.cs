@@ -1238,7 +1238,9 @@ public static partial class DataContractJsonSerializerTests
             var offsetMinutes = (int)TimeZoneInfo.Local.GetUtcOffset(date).TotalMinutes;
             original.Add(date.AddMinutes(offsetMinutes));
             timeZoneStrings.Add(string.Format("{0:+;-}{1}", offsetMinutes, new TimeSpan(0, offsetMinutes, 0).ToString(@"hhmm")));
+            Console.WriteLine($"offsetMinutes {offsetMinutes}");
         }
+        Console.WriteLine(timeZoneStrings);
         var actual = SerializeAndDeserialize<EnumerableCollection>(original, string.Format(@"[""\/Date(946684800000{0})\/"",""\/Date(946771200000{0})\/"",""\/Date(946857600000{0})\/""]", timeZoneStrings.ToArray()));
 
         Assert.Equal((IEnumerable<DateTime>)actual, (IEnumerable<DateTime>)original);
