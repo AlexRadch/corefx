@@ -125,17 +125,17 @@ namespace System.Buffers
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal SequencePosition Seek(in SequencePosition start, in SequencePosition end, int count) => Seek(start, end, (long)count);
+        private SequencePosition Seek(in SequencePosition start, in SequencePosition end, int offset) => Seek(start, end, (long)offset);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal SequencePosition Seek(in SequencePosition start, in SequencePosition end, long count)
+        private SequencePosition Seek(in SequencePosition start, in SequencePosition end, long offset)
         {
             GetTypeAndIndices(start.GetInteger(), end.GetInteger(), out SequenceType type, out int startIndex, out int endIndex);
 
             object startObject = start.GetObject();
-            object endObject = end.GetObject();
+            object endObject;
 
-            if (type == SequenceType.MultiSegment && startObject != endObject)
+            if (type == SequenceType.MultiSegment && startObject != (endObject = end.GetObject()))
             {
                 Debug.Assert(startObject is ReadOnlySequenceSegment<T>);
                 var startSegment = Unsafe.As<ReadOnlySequenceSegment<T>>(startObject);
@@ -143,69 +143,49 @@ namespace System.Buffers
                 int currentLength = startSegment.Memory.Length - startIndex;
 
                 // Position in start segment, defer to single segment seek
-                if (currentLength > count)
+                if (currentLength > offset)
                     goto IsSingleSegment;
 
                 // End of segment. Move to start of next.
-                return SeekMultiSegment(startSegment.Next, startIndex, endObject, endIndex, count - currentLength);
+                return SeekMultiSegment(startSegment.Next, endObject, endIndex, offset - currentLength);
             }
 
-            Debug.Assert(startObject == endObject);
+            Debug.Assert(startObject == end.GetObject());
 
-            if (endIndex - startIndex < count)
-                ThrowHelper.ThrowArgumentOutOfRangeException_CountOutOfRange();
+            if (endIndex - startIndex < offset)
+                ThrowHelper.ThrowArgumentOutOfRangeException_OffsetOutOfRange();
 
             // Single segment Seek
         IsSingleSegment:
-            return new SequencePosition(startObject, startIndex + (int)count);
+            return new SequencePosition(startObject, startIndex + (int)offset);
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        private static SequencePosition SeekMultiSegment(ReadOnlySequenceSegment<T> currentSegment, int startIndex, object endObject, int endPosition, long count)
+        private static SequencePosition SeekMultiSegment(ReadOnlySequenceSegment<T> currentSegment, object endObject, int endPosition, long offset)
         {
-            Debug.Assert(currentSegment != null);
-            Debug.Assert(count >= 0);
+            Debug.Assert(offset >= 0);
 
-            while (currentSegment != null && currentSegment != endObject)
+            while (currentSegment != endObject)
             {
+                Debug.Assert(currentSegment != null);
+
                 int memoryLength = currentSegment.Memory.Length;
 
                 // Fully contained in this segment
-                if (memoryLength > count)
+                if (memoryLength > offset)
                     goto FoundSegment;
 
                 // Move to next
-                count -= memoryLength;
+                offset -= memoryLength;
                 currentSegment = currentSegment.Next;
             }
 
             // Hit the end of the segments but didn't reach the count
-            if (currentSegment == null || (currentSegment == endObject && endPosition < count))
-                ThrowHelper.ThrowArgumentOutOfRangeException_CountOutOfRange();
-
+            if (endPosition < offset)
+                ThrowHelper.ThrowArgumentOutOfRangeException_OffsetOutOfRange();
+        
         FoundSegment:
-            return new SequencePosition(currentSegment, (int)count);
-        }
-
-        private static void CheckEndReachable(object startSegment, object endSegment)
-        {
-            Debug.Assert(startSegment != null);
-            Debug.Assert(startSegment is ReadOnlySequenceSegment<T>);
-            Debug.Assert(endSegment != null);
-
-            var current = Unsafe.As<ReadOnlySequenceSegment<T>>(startSegment);
-
-            while (current.Next != null)
-            {
-                current = current.Next;
-                if (current == endSegment)
-                {
-                    // Found end
-                    return;
-                }
-            }
-
-            ThrowHelper.ThrowInvalidOperationException_EndPositionNotReached();
+            return new SequencePosition(currentSegment, (int)offset);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="Perf.Base64EncodeDecode.cs" />
     <Compile Include="Perf.MemorySlice.cs" />
+    <Compile Include="Perf.ReadOnlySequence.GetPosition.cs" />
     <Compile Include="Perf.ReadOnlySequence.First.cs" />
     <Compile Include="Perf.ReadOnlySequence.TryGet.cs" />
     <Compile Include="Perf.Span.BinaryReadAndWrite.cs" />
