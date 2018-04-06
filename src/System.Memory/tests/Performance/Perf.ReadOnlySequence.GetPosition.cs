@@ -11,7 +11,7 @@ namespace System.Buffers.Tests
 {
     public class Rerf_ReadOnlySequence_GetPosition
     {
-        private const int InnerCount = 100_000;
+        private const int InnerCount = 10_000;
         volatile static int _volatileInt = 0;
 
         [Benchmark(InnerIterationCount = InnerCount)]
@@ -19,6 +19,7 @@ namespace System.Buffers.Tests
         private static void Byte_Array(int size, int offset)
         {
             var buffer = new ReadOnlySequence<byte>(new byte[size], offset, size - 2 * offset);
+            int getOffset = (size - 2 * offset) / 10;
 
             foreach (BenchmarkIteration iteration in Benchmark.Iterations)
             {
@@ -28,9 +29,9 @@ namespace System.Buffers.Tests
                     for (int i = 0; i < Benchmark.InnerIterationCount; i++)
                     {
                         var p = buffer.Start;
-                        while (p != buffer.End)
+                        for (int j = 0; j < 10; j++)
                         {
-                            p = buffer.GetPosition(100, p);
+                            p = buffer.GetPosition(getOffset, p);
                             localInt ^= p.GetInteger();
                         }
                     }
@@ -48,6 +49,7 @@ namespace System.Buffers.Tests
             for (int j = 0; j < 10; j++)
                 segment2 = segment2.Append(new byte[size / 10]);
             var buffer = new ReadOnlySequence<byte>(segment1, offset, segment2, size / 10 - offset);
+            int getOffset = (size - 2 * offset) / 10;
 
             foreach (BenchmarkIteration iteration in Benchmark.Iterations)
             {
@@ -57,9 +59,9 @@ namespace System.Buffers.Tests
                     for (int i = 0; i < Benchmark.InnerIterationCount; i++)
                     {
                         var p = buffer.Start;
-                        while (p != buffer.End)
+                        for (int j = 0; j < 10; j++)
                         {
-                            p = buffer.GetPosition(100, p);
+                            p = buffer.GetPosition(getOffset, p);
                             localInt ^= p.GetInteger();
                         }
                     }
@@ -80,7 +82,7 @@ namespace System.Buffers.Tests
                 {
                     for (int i = 0; i < Benchmark.InnerIterationCount; i++)
                     {
-                        for (int j = 0; i < 100; j++)
+                        for (int j = 0; j < 10; j++)
                         {
                             var p = buffer.GetPosition(0);
                             localInt ^= p.GetInteger();
@@ -103,7 +105,7 @@ namespace System.Buffers.Tests
                 {
                     for (int i = 0; i < Benchmark.InnerIterationCount; i++)
                     {
-                        for (int j = 0; i < 100; j++)
+                        for (int j = 0; j < 10; j++)
                         {
                             var p = buffer.GetPosition(0);
                             localInt ^= p.GetInteger();
@@ -123,7 +125,8 @@ namespace System.Buffers.Tests
             for (int j = 0; j < 10; j++)
                 segment2 = segment2.Append(new char[size / 10]);
 
-            var buffer = new ReadOnlySequence<char>(segment1, offset, segment2, size / 10 - offset); 
+            var buffer = new ReadOnlySequence<char>(segment1, offset, segment2, size / 10 - offset);
+            var getOffset = (size - 2 * offset) / 10;
 
             foreach (BenchmarkIteration iteration in Benchmark.Iterations)
             {
@@ -133,9 +136,9 @@ namespace System.Buffers.Tests
                     for (int i = 0; i < Benchmark.InnerIterationCount; i++)
                     {
                         var p = buffer.Start;
-                        while (p != buffer.End)
+                        for (int j = 0; j < 10; j++)
                         {
-                            p = buffer.GetPosition(100, p);
+                            p = buffer.GetPosition(getOffset, p);
                             localInt ^= p.GetInteger();
                         }
                     }
@@ -151,6 +154,7 @@ namespace System.Buffers.Tests
             ReadOnlyMemory<char> memory = new string('a', size).AsMemory();
             memory = memory.Slice(offset, size - 2 * offset);
             var buffer = new ReadOnlySequence<char>(memory);
+            var getOffset = (size - 2 * offset) / 10;
 
             foreach (BenchmarkIteration iteration in Benchmark.Iterations)
             {
@@ -160,9 +164,9 @@ namespace System.Buffers.Tests
                     for (int i = 0; i < Benchmark.InnerIterationCount; i++)
                     {
                         var p = buffer.Start;
-                        while (p != buffer.End)
+                        for (int j = 0; j < 10; j++)
                         {
-                            p = buffer.GetPosition(100, p);
+                            p = buffer.GetPosition(getOffset, p);
                             localInt ^= p.GetInteger();
                         }
                     }
@@ -183,7 +187,7 @@ namespace System.Buffers.Tests
                 {
                     for (int i = 0; i < Benchmark.InnerIterationCount; i++)
                     {
-                        for (int j = 0; i < 100; j++)
+                        for (int j = 0; j < 10; j++)
                         {
                             var p = buffer.GetPosition(0);
                             localInt ^= p.GetInteger();
@@ -206,7 +210,7 @@ namespace System.Buffers.Tests
                 {
                     for (int i = 0; i < Benchmark.InnerIterationCount; i++)
                     {
-                        for (int j = 0; i < 100; j++)
+                        for (int j = 0; j < 10; j++)
                         {
                             var p = buffer.GetPosition(0);
                             localInt ^= p.GetInteger();
